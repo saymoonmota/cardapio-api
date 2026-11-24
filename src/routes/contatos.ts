@@ -117,7 +117,7 @@ router.patch('/:id/lido', requireAuth, (req: Request, res: Response): void => {
   const novoLido = typeof lido === 'boolean' ? (lido ? 1 : 0) : (row.lido === 1 ? 0 : 1)
 
   db.prepare('UPDATE contatos SET lido = ? WHERE id = ?').run(novoLido, req.params.id)
-  res.json({ id: parseInt(req.params.id), lido: novoLido === 1 })
+  res.json({ id: parseInt(String(req.params.id), 10), lido: novoLido === 1 })
 })
 
 // DELETE /api/contatos/:id — remove um contato
