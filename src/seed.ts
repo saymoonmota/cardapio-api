@@ -1,26 +1,10 @@
 /**
  * Popula o banco com o admin padrão e os pratos do frontend original.
- * Execute: npm run seed
+ * Pode ser chamado na inicialização do servidor ou via: npm run seed
  */
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import db from './db'
-
-// ─── Admin ───────────────────────────────────────────────────────────────────
-
-const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@cardapiaui.com'
-const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin123'
-
-const existing = db.prepare('SELECT id FROM admins WHERE email = ?').get(adminEmail)
-if (!existing) {
-  const hash = bcrypt.hashSync(adminPassword, 10)
-  db.prepare('INSERT INTO admins (email, senha_hash) VALUES (?, ?)').run(adminEmail, hash)
-  console.log(`✔ Admin criado: ${adminEmail}`)
-} else {
-  console.log(`– Admin já existe: ${adminEmail}`)
-}
-
-// ─── Pratos ──────────────────────────────────────────────────────────────────
 
 const pratos = [
   {
@@ -175,36 +159,52 @@ const pratos = [
   },
 ]
 
-const insert = db.prepare(`
-  INSERT OR IGNORE INTO pratos (
-    id, nome, categoria, tempo_preparo_minutos,
-    descricao, imagem, imagem_alt, aviso_imagem,
-    credito_imagem, fonte_imagem, ingredientes,
-    modo_preparo, acompanhamentos
-  ) VALUES (
-    @id, @nome, @categoria, @tempoPreparoMinutos,
-    @descricao, @imagem, @imagemAlt, @avisoImagem,
-    @creditoImagem, @fonteImagem, @ingredientes,
-    @modoPreparo, @acompanhamentos
-  )
-`)
+export function runSeed() {
+  // ─── Admin ─────────────────────────────────────────────────────────────────
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@cardapiaui.com'
+  const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin123'
 
-const seedPratos = db.transaction(() => {
-  for (const p of pratos) {
-    const result = insert.run({
-      ...p,
-      ingredientes: JSON.stringify(p.ingredientes),
-      acompanhamentos: JSON.stringify(p.acompanhamentos),
-    })
-    if (result.changes > 0) {
-      console.log(`✔ Prato inserido: ${p.nome}`)
-    } else {
-      console.log(`– Prato já existe: ${p.nome}`)
-    }
+  const existing = db.prepare('SELECT id FROM admins WHERE email = ?').get(adminEmail)
+  if (!existing) {
+    const hash = bcrypt.hashSync(adminPassword, 10)
+    db.prepare('INSERT INTO admins (email, senha_hash) VALUES (?, ?)').run(adminEmail, hash)
+    console.log(`✔ Admin criado: ${adminEmail}`)
+  } else {
+    console.log(`– Admin já existe: ${adminEmail}`)
   }
-})
 
-seedPratos()
+  // ─── Pratos ────────────────────────────────────────────────────────────────
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO pratos (
+      id, nome, categoria, tempo_preparo_minutos,
+      descricao, imagem, imagem_alt, aviso_imagem,
+      credito_imagem, fonte_imagem, ingredientes,
+      modo_preparo, acompanhamentos
+    ) VALUES (
+      @id, @nome, @categoria, @tempoPreparoMinutos,
+      @descricao, @imagem, @imagemAlt, @avisoImagem,
+      @creditoImagem, @fonteImagem, @ingredientes,
+      @modoPreparo, @acompanhamentos
+    )
+  `)
 
-console.log('\nSeed concluído.')
-db.close()
+  const seedPratos = db.transaction(() => {
+    for (const p of pratos) {
+      insert.run({
+        ...p,
+        ingredientes: JSON.stringify(p.ingredientes),
+        acompanhamentos: JSON.stringify(p.acompanhamentos),
+      })
+    }
+  })
+
+  seedPratos()
+  console.log(`✔ ${pratos.length} pratos verificados.`)
+}
+
+// Permite rodar diretamente: npm run seed
+if (process.argv[1] && process.argv[1].includes('seed')) {
+  runSeed()
+  console.log('\nSeed concluído.')
+  db.close()
+}

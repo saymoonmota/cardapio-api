@@ -5,6 +5,7 @@ import authRoutes from './routes/auth'
 import pratosRoutes from './routes/pratos'
 import contatosRoutes from './routes/contatos'
 import dashboardRoutes from './routes/dashboard'
+import { runSeed } from './seed'
 
 const app = express()
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
@@ -40,6 +41,9 @@ app.use((_req, res) => {
 })
 
 // ─── Inicialização ───────────────────────────────────────────────────────────
+
+// Garante admin e pratos no banco ao subir (seguro rodar múltiplas vezes)
+runSeed()
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Cardapio API rodando em http://localhost:${PORT}`)
