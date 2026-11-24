@@ -12,7 +12,10 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10)
 // ─── Middlewares globais ─────────────────────────────────────────────────────
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  origin: [
+    process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    'https://cardapiaui.netlify.app',
+  ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
